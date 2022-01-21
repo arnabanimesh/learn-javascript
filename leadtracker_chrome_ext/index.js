@@ -33,8 +33,9 @@ inputEl.addEventListener("keyup", function (e) {
 
 tabBtn.addEventListener("click", function () {
     chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-        myLeads[myLeads.length] = tabs[0].url.substring(8);
-        render(myLeads);
+        if(/^(ftp|https?):\/\//.test(tabs[0].url)){myLeads[myLeads.length] = tabs[0].url.substring(tabs[0].url.search(/:/)+3);
+        render(myLeads);}
+        else {console.log("Local system resource links e.g. about:, chrome:// can not be loaded by extensions.")};
     });
 });
 
@@ -58,6 +59,7 @@ document.querySelector('body').addEventListener('mousedown', function (event) {
 
 function render(leads) {
     ulEl.textContent = "";
+    const frag = document.createDocumentFragment();
     for (let i = 0; i < leads.length; i++) {
         const li = document.createElement("li");
         const a = document.createElement("a");
@@ -68,7 +70,7 @@ function render(leads) {
         if (aTextStr.length > 53) {
             aText = document.createTextNode(aText.wholeText.substring(0, 50) + "...");
         }
-        if (aTextStr.substring(0, 4) !== "http") { aTextStr = "https://" + aTextStr; }
+        if (!(/:\/\//.test(aTextStr))) { aTextStr = "https://" + aTextStr; }
         a.setAttribute('href', aTextStr);
         a.setAttribute('target', '_blank');
         a.appendChild(aText);
@@ -76,7 +78,8 @@ function render(leads) {
         span.setAttribute('id', 'close-' + i);
         span.appendChild(spanText);
         li.append(a, span);
-        ulEl.appendChild(li);
+        frag.appendChild(li);
     }
+    ulEl.appendChild(frag);
     localStorage.setItem("myLeads", JSON.stringify(leads));
 }
